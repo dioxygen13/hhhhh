@@ -1,12 +1,4 @@
-
-
-
 local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
-local player = game.Players.LocalPlayer
-local HttpService = game:GetService("HttpService")
-
-
-
 
 local Window = Rayfield:CreateWindow({
     Name = "free items lol - made by @peculiarpeculiar",
@@ -27,38 +19,74 @@ local Window = Rayfield:CreateWindow({
     }
 })
 
-Rayfield:Notify("welcome", "ya", 4483362458)
+Rayfield:Notify({
+    Title = "Welcome",
+    Content = "ya",
+    Duration = 6.5,
+    Image = 4483362458,
+})
 
-local Tab = Window:CreateTab("main", 4483362458)
+local Tab = Window:CreateTab("Main", 4483362458)
 
-local Section = Tab:CreateSection("stuff")
+-- Section for Item Toggles
+local SectionItems = Tab:CreateSection("Item Toggles")
 
-local teleporting = false
-local connectaa
-local originalCFrame
+-- Store toggle states for item toggles
+local itemToggles = {
+    ["SUKUNA'S FINGER"] = false,
+    ["TRUE WAR REMNANT"] = false,
+    ["FORGOTTEN ORB"] = false,
+    ["VOID KEY"] = false,
+    ["PROSTHETIC ARM"] = false,
+    ["SLEEPING MEDICINE"] = false,
+    ["INVERTED SPEAR OF HEAVEN"] = false,
+    ["JET BLACK BLADE"] = false,
+    ["DRAGONBONE"] = false
+}
 
-
-local function sendToWebhook(itemName)
-    local data = {
-        ["content"] = "picked up: **"..itemName.."**",
-        ["username"] = "hawk tuah bot"
-    }
-    local jsonData = HttpService:JSONEncode(data)
-    
-    request({
-        Url = webhook,
-        Method = "POST",
-        Headers = {["Content-Type"] = "application/json"},
-        Body = jsonData
+-- Create toggles for each item
+for itemName, _ in pairs(itemToggles) do
+    Tab:CreateToggle({
+        Name = itemName,
+        CurrentValue = false,
+        Flag = itemName,
+        Callback = function(Value)
+            itemToggles[itemName] = Value
+        end
     })
 end
 
+local teleporting = false
+local originalCFrame
+
+local function teleportIfBagMatches()
+    local player = game.Players.LocalPlayer
+    local humanoidRootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not humanoidRootPart then return end
+
+    local effects = game.Workspace:FindFirstChild("Effects")
+    if effects then
+        local bag = effects:FindFirstChild("Bag")
+        if bag and bag:FindFirstChild("Info") and bag.Info:FindFirstChild("TextLabel") then
+            local bagText = string.upper(bag.Info.TextLabel.Text)
+            for itemName, isEnabled in pairs(itemToggles) do
+                if isEnabled and bagText == itemName then
+                    humanoidRootPart.CFrame = bag.CFrame
+                    wait(2)
+                    humanoidRootPart.CFrame = originalCFrame
+                end
+            end
+        end
+    end
+end
+
 local Toggle = Tab:CreateToggle({
-    Name = "Steal",
+    Name = "Enable Teleport",
     CurrentValue = false,
-    Flag = "Steal",
+    Flag = "EnableTeleport",
     Callback = function(Value)
         teleporting = Value
+        local player = game.Players.LocalPlayer
         local humanoidRootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 
         if teleporting and humanoidRootPart then
@@ -66,47 +94,10 @@ local Toggle = Tab:CreateToggle({
 
             spawn(function()
                 while teleporting do
-                    local effects = game.Workspace:FindFirstChild("Effects")
-                    if effects then
-                        local bag = effects:FindFirstChild("Bag")
-                        if bag and bag:FindFirstChild("Info") and bag.Info:FindFirstChild("TextLabel") then
-                            local labelText = string.upper(bag.Info.TextLabel.Text)
-                            
-                            
-                            if table.find(validitems, labelText) then
-                                humanoidRootPart.CFrame = bag.CFrame
-
-                                local itemPickedUp = false
-                                
-                                if connectaa then
-                                    connectaa:Disconnect()
-                                end
-
-                                connectaa = player.Backpack.ChildAdded:Connect(function(item)
-                                    local itemName = string.upper(item.Name)
-                               
-                                    if teleporting and table.find(validitems, itemName) then
-                                        itemPickedUp = true
-                                        humanoidRootPart.CFrame = originalCFrame
-                                        sendToWebhook(item.Name) 
-                                    end
-                                end)
-
-                                wait(2)
-
-                                if not itemPickedUp then
-                                    humanoidRootPart.CFrame = originalCFrame
-                                end
-                            end
-                        end
-                    end
-                    wait(0.01)
+                    teleportIfBagMatches()
+                    wait(0.2)
                 end
             end)
-        else
-            if connectaa then
-                connectaa:Disconnect()
-            end
         end
-    end,
+    end
 })
