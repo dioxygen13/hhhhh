@@ -28,10 +28,7 @@ Rayfield:Notify({
 
 local Tab = Window:CreateTab("Main", 4483362458)
 
--- Section for Item Toggles
-local SectionItems = Tab:CreateSection("Item Toggles")
-
--- Store toggle states for item toggles
+-- Store toggle states for item toggles (moved above the functions)
 local itemToggles = {
     ["SUKUNA'S FINGER"] = false,
     ["TRUE WAR REMNANT"] = false,
@@ -44,17 +41,8 @@ local itemToggles = {
     ["DRAGONBONE"] = false
 }
 
--- Create toggles for each item
-for itemName, _ in pairs(itemToggles) do
-    Tab:CreateToggle({
-        Name = itemName,
-        CurrentValue = false,
-        Flag = itemName,
-        Callback = function(Value)
-            itemToggles[itemName] = Value
-        end
-    })
-end
+-- Section for Enable Teleport Steal (moved above Item Toggles)
+local SectionTeleport = Tab:CreateSection("Steal")
 
 local teleporting = false
 local originalCFrame
@@ -71,16 +59,25 @@ local function teleportIfBagMatches()
             local bagText = string.upper(bag.Info.TextLabel.Text)
             for itemName, isEnabled in pairs(itemToggles) do
                 if isEnabled and bagText == itemName then
-                    humanoidRootPart.CFrame = bag.CFrame
-                    wait(2)
-                    humanoidRootPart.CFrame = originalCFrame
+                    -- Continuously teleport until item is no longer detected
+                    local startTime = tick()
+                    while tick() - startTime < 2 do -- Loop for 2 seconds
+                        if not effects:FindFirstChild("Bag") then
+                            break -- Stop when the item is picked up (no longer detected)
+                        end
+                        humanoidRootPart.CFrame = bag.CFrame
+                        wait(0.1) -- Teleport repeatedly with a small delay
+                    end
+                    humanoidRootPart.CFrame = originalCFrame -- Teleport back to the original position
+                    break -- Exit loop after teleporting
                 end
             end
         end
     end
 end
 
-local Toggle = Tab:CreateToggle({
+-- Create the "Enable Teleport Steal" toggle
+local ToggleTeleport = Tab:CreateToggle({
     Name = "Steal",
     CurrentValue = false,
     Flag = "Steal",
@@ -101,3 +98,18 @@ local Toggle = Tab:CreateToggle({
         end
     end
 })
+
+-- Section for Item Toggles
+local SectionItems = Tab:CreateSection("Item Toggles")
+
+-- Create toggles for each item
+for itemName, _ in pairs(itemToggles) do
+    Tab:CreateToggle({
+        Name = itemName,
+        CurrentValue = false,
+        Flag = itemName,
+        Callback = function(Value)
+            itemToggles[itemName] = Value
+        end
+    })
+end
