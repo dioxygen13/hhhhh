@@ -95,7 +95,7 @@ local Toggle = Tab:CreateToggle({
             spawn(function()
                 while teleporting do
                     teleportIfBagMatches()
-                    wait(0.2)
+                    wait(0.01)
                 end
             end)
         end
