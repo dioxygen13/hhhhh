@@ -81,9 +81,9 @@ local function teleportIfBagMatches()
 end
 
 local Toggle = Tab:CreateToggle({
-    Name = "Enable Teleport",
+    Name = "Steal",
     CurrentValue = false,
-    Flag = "EnableTeleport",
+    Flag = "Steal",
     Callback = function(Value)
         teleporting = Value
         local player = game.Players.LocalPlayer
